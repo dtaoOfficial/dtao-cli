@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 function App() {
   return (
     <BrowserRouter>
+      {/* DTAO:PROVIDERS_OPEN */}
       <div className="min-h-screen relative">
         <div className="fixed inset-0 -z-10 opacity-70 dark:opacity-30 pointer-events-none frosted-bg-canvas" />
         <Routes>
@@ -23,6 +24,7 @@ function App() {
           />
         </Routes>
       </div>
+      {/* DTAO:PROVIDERS_CLOSE */}
     </BrowserRouter>
   )
 }
