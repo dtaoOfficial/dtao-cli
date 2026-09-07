@@ -1,6 +1,6 @@
 {
   "name": "@dtaoofficial/dtao-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold full-stack projects and reusable feature bricks with the dtao CLI",
   "bin": {
     "dtao": "dist/index.js"
