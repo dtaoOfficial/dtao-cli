@@ -16,7 +16,7 @@ function App() {
                 <div className="text-center p-8 rounded-3xl frosted-card">
                   <h1 className="text-2xl font-extrabold text-sky-950 dark:text-white mb-2">dtao project</h1>
                   <p className="text-slate-600 dark:text-slate-300">
-                    Run <code className="text-sky-600 dark:text-sky-400 font-mono">dtao add login</code> to add your first feature.
+                    Run <code className="text-sky-600 dark:text-sky-400 font-mono">npx dtao add login</code> to add your first feature.
                   </p>
                 </div>
               </div>
