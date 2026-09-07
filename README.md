@@ -4,16 +4,37 @@ Scaffold full-stack projects (React + TypeScript, FastAPI, MongoDB, Docker Compo
 
 ## Install
 
+Both of these work — pick whichever fits your workflow.
+
+**Global** (available as `dtao` anywhere on your machine):
+
 ```
 npm install -g @dtaoofficial/dtao-cli
 ```
 
+**Local / per-project** (installed into just this project, no global changes):
+
+```
+npm install --save-dev @dtaoofficial/dtao-cli
+```
+
 ## Usage
+
+If you installed globally, run commands directly:
 
 ```
 dtao init
 cd <project-name>
 dtao add login
+docker compose up -d --build
+```
+
+If you installed locally, run them through `npx` instead:
+
+```
+npx dtao init
+cd <project-name>
+npx dtao add login
 docker compose up -d --build
 ```
 
