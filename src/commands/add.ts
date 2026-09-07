@@ -39,7 +39,7 @@ export async function addCommand(name: string, opts: AddOptions): Promise<void> 
 
   const missingDeps = (component.dependsOn ?? []).filter((dep) => !manifest.components.includes(dep))
   if (missingDeps.length) {
-    p.cancel(`"${name}" requires ${missingDeps.join(', ')} to be installed first. Run: dtao add ${missingDeps[0]}`)
+    p.cancel(`"${name}" requires ${missingDeps.join(', ')} to be installed first. Run: npx dtao add ${missingDeps[0]}`)
     process.exit(1)
   }
 

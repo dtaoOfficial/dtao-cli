@@ -18,7 +18,7 @@ export function manifestPath(projectRoot: string): string {
 export function readManifest(projectRoot: string): DtaoManifest {
   const p = manifestPath(projectRoot)
   if (!fs.existsSync(p)) {
-    throw new Error(`No .dtao/manifest.json found in ${projectRoot}. Run "dtao init" first.`)
+    throw new Error(`No .dtao/manifest.json found in ${projectRoot}. Run "npx dtao init" first.`)
   }
   return JSON.parse(fs.readFileSync(p, 'utf-8'))
 }

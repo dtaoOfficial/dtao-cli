@@ -77,5 +77,5 @@ export async function initCommand(opts: InitOptions): Promise<void> {
 
   spinner.stop('Project scaffolded')
 
-  p.outro(`Done. Next:\n  cd ${projectName}\n  dtao add login\n  docker compose up -d --build`)
+  p.outro(`Done. Next:\n  cd ${projectName}\n  npx dtao add login\n  docker compose up -d --build`)
 }
