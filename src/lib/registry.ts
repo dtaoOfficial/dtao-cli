@@ -63,10 +63,14 @@ function ensureRegistryCloned(cacheDir: string): void {
   }
 }
 
+let cachedRegistry: Registry | undefined
+
 export function loadRegistry(): Registry {
+  if (cachedRegistry) return cachedRegistry
   const registryJsonPath = path.join(registryRoot(), 'registry.json')
   const raw = fs.readFileSync(registryJsonPath, 'utf-8')
-  return JSON.parse(raw)
+  cachedRegistry = JSON.parse(raw)
+  return cachedRegistry as Registry
 }
 
 export function getComponent(name: string): ComponentDefinition {

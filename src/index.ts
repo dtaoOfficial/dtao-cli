@@ -15,8 +15,8 @@ program
   .action(initCommand)
 
 program
-  .command('add <component>')
-  .description('Add a component to the current project')
+  .command('add <components...>')
+  .description('Add one or more components to the current project (their real dependencies are added automatically)')
   .option('-y, --yes', 'skip confirmation and auto-start docker compose')
   .action(addCommand)
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as p from '@clack/prompts'
-import { getComponent, componentSourcePath } from '../lib/registry'
+import { getComponent, componentSourcePath, ComponentDefinition } from '../lib/registry'
 import { copyFile } from '../lib/scaffold'
 import { injectAtMarker } from '../lib/inject'
 import { addComponent, readManifest } from '../lib/manifest'
@@ -11,38 +11,52 @@ export interface AddOptions {
   yes?: boolean
 }
 
-export async function addCommand(name: string, opts: AddOptions): Promise<void> {
-  p.intro(`dtao add ${name}`)
+// Resolves the real dependency closure for whatever was asked for, in a
+// valid install order (a component's own dependencies always come first),
+// skipping anything already installed. So `dtao add avatar-upload` alone
+// pulls in login/user-profile-page/file-image-upload/toast-notifications
+// too if they aren't there yet -- no more manually working out and typing
+// the whole chain one command at a time.
+export function resolveInstallPlan(requested: string[], alreadyInstalled: string[]): string[] {
+  const plan: string[] = []
+  const seen = new Set(alreadyInstalled)
+  const visiting = new Set<string>()
 
-  const projectRoot = process.cwd()
-
-  let manifest
-  try {
-    manifest = readManifest(projectRoot)
-  } catch (err) {
-    p.cancel((err as Error).message)
-    process.exit(1)
+  function visit(name: string) {
+    if (seen.has(name)) return
+    if (visiting.has(name)) {
+      p.cancel(`Circular dependency detected involving "${name}".`)
+      process.exit(1)
+    }
+    let component: ComponentDefinition
+    try {
+      component = getComponent(name)
+    } catch (err) {
+      p.cancel((err as Error).message)
+      process.exit(1)
+    }
+    visiting.add(name)
+    for (const dep of component.dependsOn ?? []) {
+      visit(dep)
+    }
+    visiting.delete(name)
+    seen.add(name)
+    plan.push(name)
   }
 
-  if (manifest.components.includes(name)) {
-    p.cancel(`"${name}" is already added to this project.`)
-    process.exit(1)
+  for (const name of requested) {
+    if (alreadyInstalled.includes(name)) {
+      p.log.warn(`"${name}" is already added to this project -- skipping.`)
+      continue
+    }
+    visit(name)
   }
 
-  let component
-  try {
-    component = getComponent(name)
-  } catch (err) {
-    p.cancel((err as Error).message)
-    process.exit(1)
-  }
+  return plan
+}
 
-  const missingDeps = (component.dependsOn ?? []).filter((dep) => !manifest.components.includes(dep))
-  if (missingDeps.length) {
-    p.cancel(`"${name}" requires ${missingDeps.join(', ')} to be installed first. Run: npx dtao add ${missingDeps[0]}`)
-    process.exit(1)
-  }
-
+function installOne(projectRoot: string, name: string): ComponentDefinition {
+  const component = getComponent(name)
   const spinner = p.spinner()
   spinner.start(`Copying ${name} files`)
 
@@ -77,13 +91,47 @@ export async function addCommand(name: string, opts: AddOptions): Promise<void> 
 
     addComponent(projectRoot, name)
   } catch (err) {
-    spinner.stop('Failed to copy files', 1)
+    spinner.stop(`Failed to copy ${name}`, 1)
     p.log.error((err as Error).stack ?? String(err))
     process.exit(1)
   }
   spinner.stop(`${name} files added`)
+  return component
+}
 
-  if (!component.postInstall?.seedCommand) {
+export async function addCommand(names: string[], opts: AddOptions): Promise<void> {
+  const projectRoot = process.cwd()
+
+  let manifest
+  try {
+    manifest = readManifest(projectRoot)
+  } catch (err) {
+    p.cancel((err as Error).message)
+    process.exit(1)
+  }
+
+  const plan = resolveInstallPlan(names, manifest.components)
+
+  if (plan.length === 0) {
+    p.outro('Nothing to do -- everything requested is already installed.')
+    return
+  }
+
+  const extras = plan.filter((n) => !names.includes(n))
+  p.intro(`dtao add ${plan.join(' ')}`)
+  if (extras.length > 0) {
+    p.log.step(`Also adding real dependencies you didn't ask for by name: ${extras.join(', ')}`)
+  }
+
+  let postInstall: ComponentDefinition['postInstall'] | undefined
+  for (const name of plan) {
+    const component = installOne(projectRoot, name)
+    if (component.postInstall?.seedCommand) {
+      postInstall = component.postInstall
+    }
+  }
+
+  if (!postInstall?.seedCommand) {
     p.outro('Done.')
     return
   }
@@ -101,9 +149,7 @@ export async function addCommand(name: string, opts: AddOptions): Promise<void> 
   }
 
   if (!shouldStart) {
-    p.outro(
-      `Done. When ready:\n  docker compose up -d --build\n  docker compose exec backend ${component.postInstall.seedCommand.join(' ')}`,
-    )
+    p.outro(`Done. When ready:\n  docker compose up -d --build\n  docker compose exec backend ${postInstall.seedCommand.join(' ')}`)
     return
   }
 
@@ -130,7 +176,7 @@ export async function addCommand(name: string, opts: AddOptions): Promise<void> 
   p.log.step('Now set up your super admin:')
   const execArgs = ['compose', 'exec']
   if (!process.stdin.isTTY) execArgs.push('-T')
-  execArgs.push('backend', ...component.postInstall.seedCommand)
+  execArgs.push('backend', ...postInstall.seedCommand)
   await runCommand('docker', execArgs, projectRoot)
 
   p.outro('Login is ready. Visit http://localhost:5173')
