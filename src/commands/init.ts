@@ -60,6 +60,7 @@ export async function initCommand(opts: InitOptions): Promise<void> {
   copyDir(path.join(TEMPLATES_BASE, 'frontend'), path.join(projectRoot, 'frontend'))
   copyDir(path.join(TEMPLATES_BASE, 'backend'), path.join(projectRoot, 'backend'))
   fs.copyFileSync(path.join(TEMPLATES_BASE, 'docker-compose.yml'), path.join(projectRoot, 'docker-compose.yml'))
+  fs.copyFileSync(path.join(TEMPLATES_BASE, 'README.md'), path.join(projectRoot, 'README.md'))
 
   const envExample = fs.readFileSync(path.join(projectRoot, 'backend', '.env.example'), 'utf-8')
   const secret = crypto.randomBytes(32).toString('hex')
